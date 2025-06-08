@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 export default function TestAuthPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
@@ -21,6 +22,7 @@ export default function TestAuthPage() {
     } else {
       router.push("/signin")
     }
+    setIsLoading(false)
   }, [router])
 
   const handleSignOut = () => {
@@ -31,10 +33,18 @@ export default function TestAuthPage() {
     router.push("/signin")
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div>Loading...</div>
+      </div>
+    )
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div>Checking authentication...</div>
+        <div>Redirecting to sign in...</div>
       </div>
     )
   }
@@ -56,13 +66,13 @@ export default function TestAuthPage() {
               <h4 className="font-medium">User Information:</h4>
               <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded">
                 <p>
-                  <strong>Email:</strong> {user?.email}
+                  <strong>Email:</strong> {user?.email || "N/A"}
                 </p>
                 <p>
-                  <strong>Role:</strong> {user?.role}
+                  <strong>Role:</strong> {user?.role || "Admin"}
                 </p>
                 <p>
-                  <strong>Name:</strong> {user?.name}
+                  <strong>Name:</strong> {user?.name || "Admin User"}
                 </p>
               </div>
             </div>
