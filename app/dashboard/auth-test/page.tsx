@@ -1,22 +1,49 @@
 "use client"
 
-import { useSession, signOut } from "next-auth/react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function AuthTest() {
-  const { data: session, status } = useSession()
+export default function AuthTestPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/signin")
-    }
-  }, [status, router])
+    // Client-side only code
+    if (typeof window !== "undefined") {
+      const authStatus = localStorage.getItem("isAuthenticated")
+      const userData = localStorage.getItem("user")
 
-  if (status === "loading") {
+      if (authStatus === "true" && userData) {
+        setIsAuthenticated(true)
+        try {
+          setUser(JSON.parse(userData))
+        } catch (e) {
+          setUser({ email: "admin@example.com", role: "Admin" })
+        }
+      } else {
+        router.push("/signin")
+      }
+      setIsLoading(false)
+    }
+  }, [router])
+
+  const handleSignOut = () => {
+    localStorage.removeItem("isAuthenticated")
+    localStorage.removeItem("user")
+    sessionStorage.removeItem("isAuthenticated")
+    document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+    router.push("/signin")
+  }
+
+  // Server-side rendering safe check
+  if (typeof window === "undefined") {
+    return null // Return null during SSR
+  }
+
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div>Loading...</div>
@@ -24,56 +51,28 @@ export default function AuthTest() {
     )
   }
 
-  if (!session) {
-    return null
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div>Redirecting to sign in...</div>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto">
         <Card>
           <CardHeader>
-            <CardTitle>🎉 Authentication Test - Success!</CardTitle>
-            <CardDescription>NextAuth.js is working correctly with your application</CardDescription>
+            <CardTitle>Authentication Test</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h3 className="font-semibold">Session Information:</h3>
-                <ul className="text-sm space-y-1 mt-2">
-                  <li>
-                    <strong>User ID:</strong> {session.user?.id}
-                  </li>
-                  <li>
-                    <strong>Email:</strong> {session.user?.email}
-                  </li>
-                  <li>
-                    <strong>Name:</strong> {session.user?.name}
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-semibold">Authentication Status:</h3>
-                <ul className="text-sm space-y-1 mt-2">
-                  <li>
-                    <strong>Status:</strong> {status}
-                  </li>
-                  <li>
-                    <strong>Authenticated:</strong> ✅ Yes
-                  </li>
-                  <li>
-                    <strong>Session Active:</strong> ✅ Yes
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="flex gap-4 pt-4">
-              <Button onClick={() => router.push("/dashboard")}>Go to Dashboard</Button>
-              <Button variant="outline" onClick={() => signOut()}>
-                Sign Out
-              </Button>
-            </div>
+            <p>This page requires authentication. Please sign in to view it.</p>
+            <p>
+              <a href="/signin" className="text-blue-600 hover:underline">
+                Go to Sign In
+              </a>
+            </p>
           </CardContent>
         </Card>
       </div>
